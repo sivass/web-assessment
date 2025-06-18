@@ -1,4 +1,9 @@
+"use client";
+
+import { useEffect, useState } from "react";
+
 interface Transaction {
+  id: string;
   date: string;
   referenceId: string;
   to: string;
@@ -7,29 +12,44 @@ interface Transaction {
 }
 
 export default function TransactionTable() {
-  const transactions: Transaction[] = [
-    {
-      date: "24 Aug 2023",
-      referenceId: "#8343434343424",
-      to: "Bloom Enterprise Sdn Bhd",
-      type: "DuitNow payment",
-      amount: "RM 1,200.00",
-    },
-    {
-      date: "14 Jul 2023",
-      referenceId: "#8343434343424",
-      to: "Muhammad Andy Axmawi",
-      type: "DuitNow payment",
-      amount: "RM 54,810.16",
-    },
-    {
-      date: "12 Jul 2023",
-      referenceId: "#8343434343424",
-      to: "Utilities Company Sdn Bhd",
-      type: "DuitNow payment",
-      amount: "RM 100.00",
-    },
-  ];
+  const [transactions, setTransactions] = useState<Transaction[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+
+  useEffect(() => {
+    const fetchTransactions = async () => {
+      try {
+        const response = await fetch("/api/transactionsHistory");
+        if (!response.ok) {
+          throw new Error("Failed to fetch transactions");
+        }
+        const data = await response.json();
+        setTransactions(data.transactions);
+      } catch (err) {
+        setError(err instanceof Error ? err.message : "An error occurred");
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    fetchTransactions();
+  }, []);
+
+  if (isLoading) {
+    return (
+      <div className="flex justify-center items-center h-64">
+        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="text-center text-red-600 p-4">
+        Error: {error}
+      </div>
+    );
+  }
 
   return (
     <div className="overflow-x-auto">
@@ -54,8 +74,8 @@ export default function TransactionTable() {
           </tr>
         </thead>
         <tbody className="bg-white divide-y divide-gray-200">
-          {transactions.map((txn, index) => (
-            <tr key={index}>
+          {transactions.map((txn) => (
+            <tr key={txn.id}>
               <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
                 {txn.date}
               </td>
