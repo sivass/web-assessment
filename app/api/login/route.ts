@@ -31,17 +31,17 @@ export async function POST(request: NextRequest) {
   console.log("Login successful - setting auth token");
 
   // Generate mock JWT
-  const token = Buffer.from(`${username}:mock-token`).toString("base64");
+//   const token = Buffer.from(`${username}:mock-token`).toString("base64");
 
   // Set auth cookie
   const response = NextResponse.json({ success: true });
-  response.cookies.set("auth-token", token, {
-    httpOnly: false,
-    secure: process.env.NODE_ENV === "production",
-    maxAge: 3600, // 1 hour
-    path: "/",
-    sameSite: "lax"
-  });
+//   response.cookies.set("auth-token", token, {
+//     httpOnly: false,
+//     secure: process.env.NODE_ENV === "production",
+//     maxAge: 3600, // 1 hour
+//     path: "/",
+//     sameSite: "lax"
+//   });
 
   // Clear the secure word cookie
   response.cookies.set(`secure-word-${username}`, "", {

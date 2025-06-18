@@ -1,5 +1,5 @@
 "use client";
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { AlertTriangle, Lock } from "lucide-react";
 
 interface MFAAttemptsWidgetProps {
@@ -10,7 +10,7 @@ export default function MFAAttemptsWidget({ username }: MFAAttemptsWidgetProps) 
   const [attempts, setAttempts] = useState(0);
   const [isLocked, setIsLocked] = useState(false);
 
-  const updateAttempts = () => {
+  const updateAttempts = useCallback(() => {
     // Get attempts from session storage
     const storedAttempts = sessionStorage.getItem(`mfa-attempts-${username}`);
     if (storedAttempts) {
@@ -21,7 +21,7 @@ export default function MFAAttemptsWidget({ username }: MFAAttemptsWidgetProps) 
       setAttempts(0);
       setIsLocked(false);
     }
-  };
+  }, [username]);
 
   useEffect(() => {
     updateAttempts();
@@ -46,7 +46,7 @@ export default function MFAAttemptsWidget({ username }: MFAAttemptsWidgetProps) 
       window.removeEventListener('storage', handleStorageChange);
       window.removeEventListener('mfa-attempts-updated', handleCustomStorageChange);
     };
-  }, [username]);
+  }, [username, updateAttempts]);
 
   const remainingAttempts = Math.max(0, 3 - attempts);
 
