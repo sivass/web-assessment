@@ -1,5 +1,6 @@
 "use client";
 import { useState } from "react";
+import { useRouter } from "next/navigation";
 import CryptoJS from "crypto-js";
 
 export default function PasswordForm({
@@ -14,6 +15,7 @@ export default function PasswordForm({
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
   const [isLoading, setIsLoading] = useState(false);
+  const router = useRouter();
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -30,13 +32,41 @@ export default function PasswordForm({
         body: JSON.stringify({ username, hashedPassword, secureWord }),
       });
 
+      console.log("Response status:", response.status);
+      console.log("Response ok:", response.ok);
+
       if (!response.ok) {
         const errorData = await response.json();
+        console.log("Error data:", errorData);
+        
+        // Check if it's a secure word error
+        if (errorData.code === "SECURE_WORD_INVALID") {
+          console.log("Secure word invalid - redirecting to login");
+          
+          // Clear session storage and redirect to login
+          sessionStorage.removeItem("mfa-username");
+          sessionStorage.removeItem(`mfa-attempts-${username}`);
+          
+          // Show error message briefly before redirecting
+          setError(errorData.error);
+          
+          // Try immediate redirect first
+          router.push("/login");
+          
+          // Also try with window.location as backup
+          setTimeout(() => {
+            window.location.href = "/login";
+          }, 1000);
+          
+          return;
+        }
+        
         throw new Error(errorData.error || "Login failed");
       }
 
       onSuccess();
     } catch (err) {
+      console.log("Error:", err);
       setError(err instanceof Error ? err.message : "Login failed");
     } finally {
       setIsLoading(false);
@@ -46,6 +76,31 @@ export default function PasswordForm({
   return (
     <form onSubmit={handleSubmit} className="space-y-6">
       <h2 className="text-2xl font-bold">Enter Password</h2>
+      
+      {/* Debug section */}
+      {/* <div className="text-xs text-gray-500 space-y-1">
+        <p>Username: {username}</p>
+        <p>Secure Word: {secureWord}</p>
+        <button 
+          type="button"
+          onClick={async () => {
+            try {
+              const response = await fetch("/api/test/clearSecureWord", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ username }),
+              });
+              console.log("Secure word cleared:", await response.json());
+            } catch (err) {
+              console.log("Error clearing secure word:", err);
+            }
+          }}
+          className="text-blue-600 underline"
+        >
+          Test: Clear Secure Word
+        </button>
+      </div>
+       */}
       <div>
         <label
           htmlFor="password"
@@ -65,6 +120,9 @@ export default function PasswordForm({
       {error && (
         <div className="p-3 bg-red-50 text-red-600 rounded-md text-sm">
           {error}
+          {error.includes("secure word") && (
+            <p className="mt-1 text-xs">Redirecting to login page...</p>
+          )}
         </div>
       )}
       <button
