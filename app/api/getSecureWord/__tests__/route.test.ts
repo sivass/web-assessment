@@ -1,5 +1,6 @@
 import { NextRequest } from "next/server";
-import { POST, clearRateLimitState } from "../route";
+import { POST } from "../route";
+import { clearRateLimitState } from "@/lib/rateLimit";
 import { cookies } from "next/headers";
 
 // Mock Next.js modules

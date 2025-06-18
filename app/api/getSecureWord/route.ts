@@ -1,27 +1,18 @@
 import { NextResponse } from "next/server";
 import CryptoJS from "crypto-js";
 import { cookies } from "next/headers";
-
-const lastRequestTime = new Map<string, number>();
-
-// Test helper function to clear rate limiting state
-export const clearRateLimitState = () => {
-  lastRequestTime.clear();
-};
+import { checkRateLimit } from "@/lib/rateLimit";
 
 export async function POST(req: Request) {
   const { username } = await req.json();
 
   // Rate limiting (1 request per 10 seconds)
-  const lastTime = lastRequestTime.get(username);
-  if (lastTime && Date.now() - lastTime < 10_000) {
+  if (!checkRateLimit(username)) {
     return NextResponse.json(
       { error: "Rate limited. Try again later." },
       { status: 429 }
     );
   }
-
-  lastRequestTime.set(username, Date.now());
 
   // Check for existing secure word and validate expiration
   const cookieStore = await cookies();
