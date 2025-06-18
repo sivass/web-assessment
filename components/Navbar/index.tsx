@@ -1,13 +1,16 @@
 "use client";
 
-import { useState } from "react";
-import { Menu, X, Search } from "lucide-react";
-import { usePathname } from "next/navigation";
+import { useEffect, useState } from "react";
+import { Menu, X, Search, LogOut } from "lucide-react";
+import { usePathname, useRouter } from "next/navigation";
 import Link from "next/link";
+import { getAuthToken, removeAuthToken } from "@/lib/auth";
 
 export default function Navbar() {
   const [isOpen, setIsOpen] = useState(false);
+  const [isLoggedIn, setIsLoggedIn] = useState(false);
   const pathname = usePathname();
+  const router = useRouter();
 
   const navItems = [
     { name: "Showcase", href: "#" },
@@ -17,6 +20,33 @@ export default function Navbar() {
     { name: "Templates", href: "#" },
     { name: "Enterprise", href: "#" },
   ];
+
+  const checkAuth = () => {
+    const token = getAuthToken();
+    const isAuthenticated = !!token;
+    setIsLoggedIn(isAuthenticated);
+  };
+
+  useEffect(() => {
+    checkAuth();
+
+    // Check auth state periodically
+    const interval = setInterval(checkAuth, 1000);
+
+    // Add event listener for storage changes
+    window.addEventListener("storage", checkAuth);
+
+    return () => {
+      clearInterval(interval);
+      window.removeEventListener("storage", checkAuth);
+    };
+  }, []);
+
+  const handleLogout = () => {
+    removeAuthToken();
+    setIsLoggedIn(false);
+    router.push("/login");
+  };
 
   return (
     <nav className="bg-white shadow-sm sticky top-0 z-50">
@@ -55,17 +85,26 @@ export default function Navbar() {
               className="pl-10 pr-4 py-2 rounded-lg border border-gray-200 focus:outline-none focus:ring-2 focus:ring-blue-500"
             />
           </div>
-
-          <Link
-            href="/login"
-            className={`px-4 py-2 rounded-lg ${
-              pathname === "/login"
-                ? "bg-gray-100"
-                : "bg-blue-600 text-white hover:bg-blue-700"
-            }`}
-          >
-            Login
-          </Link>
+          {isLoggedIn ? (
+            <button
+              onClick={handleLogout}
+              className="flex items-center gap-2 px-4 py-2 rounded-lg bg-red-50 text-red-600 hover:bg-red-100"
+            >
+              <LogOut size={18} />
+              Logout
+            </button>
+          ) : (
+            <Link
+              href="/login"
+              className={`px-4 py-2 rounded-lg ${
+                pathname === "/login"
+                  ? "bg-gray-100"
+                  : "bg-blue-600 text-white hover:bg-blue-700"
+              }`}
+            >
+              Login
+            </Link>
+          )}
         </div>
       </div>
 
@@ -90,12 +129,22 @@ export default function Navbar() {
               className="w-full pl-10 pr-4 py-2 rounded-lg border border-gray-200"
             />
           </div>
-          <Link
-            href="/login"
-            className="block w-full text-center bg-blue-600 text-white py-2 rounded-lg hover:bg-blue-700"
-          >
-            Login
-          </Link>
+          {isLoggedIn ? (
+            <button
+              onClick={handleLogout}
+              className="flex items-center justify-center gap-2 w-full px-4 py-2 rounded-lg bg-red-50 text-red-600 hover:bg-red-100"
+            >
+              <LogOut size={18} />
+              Logout
+            </button>
+          ) : (
+            <Link
+              href="/login"
+              className="block w-full text-center bg-blue-600 text-white py-2 rounded-lg hover:bg-blue-700"
+            >
+              Login
+            </Link>
+          )}
         </div>
       )}
     </nav>
