@@ -4,6 +4,11 @@ import { cookies } from "next/headers";
 
 const lastRequestTime = new Map<string, number>();
 
+// Test helper function to clear rate limiting state
+export const clearRateLimitState = () => {
+  lastRequestTime.clear();
+};
+
 export async function POST(req: Request) {
   const { username } = await req.json();
 
