@@ -29,6 +29,10 @@ export default function LoginPage() {
   };
 
   const handlePasswordSuccess = () => {
+    // Store username in session storage for MFA
+    if (session?.username) {
+      sessionStorage.setItem("mfa-username", session.username);
+    }
     setStep(4);
   };
 
